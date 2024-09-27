@@ -27,9 +27,12 @@ maximumjitter = 0.1;
 %%
 
 darsp = cell(4,1);
-nIter = 100;
+nIter = 1;
+archive = cell([nIter 1]);
+
 for iiter = 1:nIter
-    iiter
+    % iiter
+    fprintf('iteration %3d/%d\n', iiter, nIter); % change display 
     %% generate eventlog
     % training before incorporating teleport trials
     eventlog_pre = simulateEventChain(numcue, 8, nan, meanITI, ...
@@ -49,8 +52,8 @@ for iiter = 1:nIter
    
     for itest = 1:3
         eventlog_post(testidx{itest}+1+(itest-1)*2,:) = nan;
-        eventlog_post([itest*2:8]+testidx{itest},2) =...
-            eventlog_post([itest*2:8]+testidx{itest},2)-cuecuedelay;
+        eventlog_post((itest*2:8)+testidx{itest},2) =...
+            eventlog_post((itest*2:8)+testidx{itest},2)-cuecuedelay;
     end
     eventlog_post = rmmissing(eventlog_post);
 
@@ -61,7 +64,7 @@ for iiter = 1:nIter
 
     %% simulate
     T = [repmat(IRI*Tratio(1),size(eventlog_pre,1),1);...
-        exp(-exponent*[1:size(eventlog_post,1)]')*(IRI*Tratio(1)-IRI*Tratio(2))+IRI*Tratio(2)];
+        exp(-exponent*(1:size(eventlog_post,1))')*(IRI*Tratio(1)-IRI*Tratio(2))+IRI*Tratio(2)];
     [DA,ANCCR,PRC,SRC,NC] = calculateANCCR(eventlog, T, alpha, k,...
         samplingperiod,w,threshold,minimumrate,beta,alpha_r,maximumjitter);
 
@@ -69,34 +72,49 @@ for iiter = 1:nIter
     incue = find(eventlog(:,1)==1);
     for itest = 1:3
         intest = incue(testtrial{itest})+1+(itest-1)*2;
-        darsp{itest}(iiter,:) = mean(DA(incue(testtrial{itest})+[0:6]),1);
+        darsp{itest}(iiter,:) = mean(DA(incue(testtrial{itest})+(0:6)),1);
     end
-    darsp{4}(iiter,:) = mean(DA(incue(ctrltrial)+[0:7]),1);
+    darsp{4}(iiter,:) = mean(DA(incue(ctrltrial)+(0:7)),1);
+    archive{iiter} = struct(...
+        'DA', DA, ...
+        'testidx1', testidx{1}, ...
+        'testidx2', testidx{2}, ...
+        'testidx3', testidx{3}, ...
+        'eventlog_pre', eventlog_pre, ...
+        'eventlog_post', eventlog_post ...
+        );
 end
 
 %% save data
-dir = 'D:\OneDrive - UCSF\dopamine contingency\erratum\';
+% dir = 'D:\OneDrive - UCSF\dopamine contingency\erratum\';
+filedir = 'Y:\NeuRLab\member_specific\HoYeon\Sim\ANCCR\data\figS13';
+save( ...
+    [filedir filesep 'ramping_teleport.mat'], ...
+    'archive' ...
+    );
+
 % cd(dir)
 % save('data\ramping_teleport.mat','darsp','threshold');
 
 %% FigS13B
-ct = cbrewer('seq','YlOrRd',5);
-ct = [flip(ct([2,4:5],:));0 0 0];
+% Skip figure reproduce
+% ct = cbrewer('seq','YlOrRd',5);
+% ct = [flip(ct([2,4:5],:));0 0 0];
 
-close all
-fHandle = figure('PaperUnits','Centimeters','PaperPosition',[2 2 3.2 3.2]);
-hold on;
-for i = 1:3
-   bar(i,nanmean(darsp{i}(:,2*i)./darsp{4}(:,2*i)),0.8,'FaceColor',ct(i,:),'EdgeColor','none');
-   errorbar(i,nanmean(darsp{i}(:,2*i)./darsp{4}(:,2*i)),...
-       nanstd(darsp{i}(:,2*i)./darsp{4}(:,2*i))/sqrt(size(darsp{i},1)),'k','CapSize',3);
-   [~,p,~,stat] = ttest(darsp{i}(:,2*i),darsp{4}(:,2*i))
-end
-bar(4,1,0.8,'FaceColor',ct(4,:),'EdgeColor','none');
-plot([0 5],[1 1],'k--');
-xlim([0.25 4.75]);
-ylim([0.5 1.5]);
-ylabel({'Normalized';'Predicted DA'});
-set(gca,'Box','off','TickDir','out','FontSize',8,'LineWidth',0.35,...
-    'XTick',1:4,'XTickLabel',{'T1';'T2';'T3';'Stand.'},'XTickLabelRotation',45,'YTick',0.5:0.5:1.5);
-print(fHandle,'-depsc',[dir,'ramping_teleport.ai']);
+% close all
+% fHandle = figure('PaperUnits','Centimeters','PaperPosition',[2 2 3.2 3.2]);
+% hold on;
+% for i = 1:3
+%    bar(i,nanmean(darsp{i}(:,2*i)./darsp{4}(:,2*i)),0.8,'FaceColor',ct(i,:),'EdgeColor','none');
+%    errorbar(i,nanmean(darsp{i}(:,2*i)./darsp{4}(:,2*i)),...
+%        nanstd(darsp{i}(:,2*i)./darsp{4}(:,2*i))/sqrt(size(darsp{i},1)),'k','CapSize',3);
+%    [~,p,~,stat] = ttest(darsp{i}(:,2*i),darsp{4}(:,2*i))
+% end
+% bar(4,1,0.8,'FaceColor',ct(4,:),'EdgeColor','none');
+% plot([0 5],[1 1],'k--');
+% xlim([0.25 4.75]);
+% ylim([0.5 1.5]);
+% ylabel({'Normalized';'Predicted DA'});
+% set(gca,'Box','off','TickDir','out','FontSize',8,'LineWidth',0.35,...
+%     'XTick',1:4,'XTickLabel',{'T1';'T2';'T3';'Stand.'},'XTickLabelRotation',45,'YTick',0.5:0.5:1.5);
+% print(fHandle,'-depsc',[dir,'ramping_teleport.ai']);
