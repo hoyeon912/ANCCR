@@ -2,6 +2,5 @@
 *.asv
 figures and data/
 *.ai
-*.fig
 *.log
 *.tmp
