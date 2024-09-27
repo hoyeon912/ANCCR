@@ -27,7 +27,7 @@ maximumjitter = 0.1;
 %%
 
 darsp = cell(4,1);
-nIter = 1;
+nIter = 1000;
 archive = cell([nIter 1]);
 
 for iiter = 1:nIter
