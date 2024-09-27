@@ -1,14 +1,16 @@
-function [st, ed, log, offset] = util_process_data(eventlog_pre, eventlog_post)
-
-st_pre = find(eventlog_pre(:, 1) == 1);
-ed_pre = find(eventlog_pre(:, 3) == 1); 
-offset = size(eventlog_pre, 1);
-
-st_post = find(eventlog_post(:, 1) == 1) + offset;
-ed_post = find(eventlog_post(:, 3) == 1) + offset;
-% n_post = size(eventlog_post, 1);
-
-st = [st_pre; st_post];
-ed = [ed_pre; ed_post];
+function [log, event, grp] = util_process_data(eventlog_pre, eventlog_post)
 log = [eventlog_pre; eventlog_post];
+trial_on = find(log(:, 1) == 1);
+reward_on = find(log(:, 3) == 1);
+teleport_on = find(diff(log(:, 1)) == 2);
+grp = ones(size(trial_on));
+for i = 1:size(teleport_log, 1)
+    grp(find(trial_on <= teleport_on(i), 1, 'last')) = log(teleport_on(i), 1)+1;
+end
+
+event = table( ...
+    'trial_on', trial_on, ...
+    'reward_on', reward_on, ...
+    'teleport_on', teleport_on ...
+    );
 end
