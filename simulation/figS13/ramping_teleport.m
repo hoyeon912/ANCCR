@@ -33,6 +33,7 @@ archive = cell([nIter 1]);
 
 for iiter = 1:nIter
     % iiter
+    tic
     fprintf('iteration %3d/%d\n', iiter, nIter); % change display 
     %% generate eventlog
     % training before incorporating teleport trials
@@ -84,6 +85,7 @@ for iiter = 1:nIter
         'eventlog_pre', eventlog_pre, ...
         'eventlog_post', eventlog_post ...
         );
+    toc
 end
 
 %% save data
