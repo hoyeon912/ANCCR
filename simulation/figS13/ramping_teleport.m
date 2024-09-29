@@ -2,6 +2,7 @@
 
 clearvars; close all; clc;
 rng(2)
+warning('off', 'MATLAB:colon:operandsNotRealScalar');
 
 % task parameter
 numcue = 2000;
