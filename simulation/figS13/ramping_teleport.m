@@ -1,7 +1,7 @@
 function ramping_teleport(nIter)
 % simulate teleport task used in Kim et al., 2020 with ANCCR
 
-clearvars; close all; clc;
+% clearvars; close all; clc;
 rng(2)
 warning('off', 'MATLAB:colon:operandsNotRealScalar');
 
