@@ -4,3 +4,6 @@ figures and data/
 *.ai
 *.log
 *.tmp
+.DC_Store
+data/
+figures/
