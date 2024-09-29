@@ -44,8 +44,12 @@ function [] = plot_teleport()
         ) ...
     );
    
-    figure('Name', 'Figure 1. Teleport response aligned by trial on');
-    sgtitle('Teleport response ab trial on')
+    figure('Name', 'Figure 1. Predicted DA response aligned by trial on');
+    t = sprintf(['Predicted DA response ab trial on\n' ...
+        'n(teleport response) = %d, n(standard) = %d'], ...
+        n_sim, n_ctrl ...
+    );
+    sgtitle(t);
     pos = get(gcf, 'Position');
     set(gcf, 'Position', pos + [0 0 600 0]);
     for i = 1:n_tel
@@ -89,9 +93,12 @@ function [] = plot_teleport()
     end
     saveas(gcf,'./fig/figS13_1-teleport_response_ab_trial_on.png');
 
-    figure('Name', 'Figure 2. Teleport response aligned by reward on');
-    sgtitle('Teleport response ab reward on')
-    pos = get(gcf, 'Position');
+    figure('Name', 'Figure 2. Predicted DA response aligned by reward on');
+    t = sprintf(['Predicted DA response ab reward on\n' ...
+        'n(teleport response) = %d, n(standard) = %d'], ...
+        n_sim, n_ctrl ...
+    );
+    sgtitle(t);    pos = get(gcf, 'Position');
     set(gcf, 'Position', pos + [0 0 600 0]);
     for i = 1:n_tel
         subplot(1, 3, i);
