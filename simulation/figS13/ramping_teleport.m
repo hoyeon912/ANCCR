@@ -1,3 +1,4 @@
+function ramping_teleport(nIter)
 % simulate teleport task used in Kim et al., 2020 with ANCCR
 
 clearvars; close all; clc;
@@ -28,7 +29,7 @@ maximumjitter = 0.1;
 %%
 
 darsp = cell(4,1);
-nIter = 1000;
+% nIter = 10;
 archive = cell([nIter 1]);
 
 for iiter = 1:nIter
@@ -121,3 +122,4 @@ save( ...
 % set(gca,'Box','off','TickDir','out','FontSize',8,'LineWidth',0.35,...
 %     'XTick',1:4,'XTickLabel',{'T1';'T2';'T3';'Stand.'},'XTickLabelRotation',45,'YTick',0.5:0.5:1.5);
 % print(fHandle,'-depsc',[dir,'ramping_teleport.ai']);
+end
