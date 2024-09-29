@@ -1,61 +1,113 @@
-function [] = plot_teleport(DA, trial_on, reward_on, teleport_on, grp)
-    DA_in_trial = nan([size(trial_on, 1), 9]);
-    for i = 1:size(trial_on, 1)
-        trial_length = reward_on(i) - trial_on(i) + 1;
-        DA_in_trial(i, 1:trial_length) = DA(trial_on(i):reward_on(i));
+function [] = plot_teleport()
+    df = './data/figS13/ramping_teleport.mat';
+    d = load(df).archive;
+    n_sim = numel(d);
+    max_cue = max(d{1}.eventlog_pre(:, 1));
+    n_trial = size(d{1}.eventlog_pre, 1) / max_cue * 2;
+    dt = struct( ...
+        'DA', nan([n_trial max_cue numel(d)]), ...
+        'grp', nan([n_trial 1 numel(d)])); 
+    
+    for i = 1:n_sim
+        log = [d{i}.eventlog_pre; d{i}.eventlog_post];
+        [trial_on, reward_on, ~, grp] = util_process_data(log);
+        for j = 1:n_trial
+            len_trial = reward_on(j) - trial_on(j) + 1;
+            dt.DA(j, 1:len_trial, i) = d{i}.DA(trial_on(j):reward_on(j));
+            dt.grp(:, 1, i) = grp;
+        end
     end
-    data = table(DA_in_trial(2001:end, :), grp(2001:end, :), 'VariableNames', {'DA', 'grp'});
-    data = sortrows(data, 'grp');
-    unq_grp = unique(data.grp);
-    mu_DA = nan([numel(unq_grp), 9]);
-    sigma_DA = nan([numel(unq_grp), 9]);
-    for i = 1:size(mu_DA, 1)
-        mu_DA(i, :) = mean(data.DA(data.grp == unq_grp(i), :));
-        sigma_DA(i, :) = std(data.DA(data.grp == unq_grp(i), :));
+    
+    n_ctrl = 0;
+    for i = 1:n_sim
+        n_ctrl = n_ctrl + find(dt.grp(:, 1, i) ~= 1, 1)-(n_trial/2+1);
     end
-    mu_DA_alter = mean(data.DA(1:find(trial_on < teleport_on(1), 1, 'last')-2000, :));
-    sigma_DA_alter = std(data.DA(1:find(trial_on < teleport_on(1), 1, 'last')-2000, :));
 
-    figure;
-    imagesc(data.DA);
-    xlabel('Cue');
-    ylabel('Trial');
-    colorbar;
-    title('Dopamine activity predicted by the ANCCR model');
+    n_tel = numel(unique(dt.grp))-1;
+    tel_resp = nan([n_sim, max_cue, n_tel]);
+    ctrl_resp = nan([n_ctrl, max_cue]);
+    ctrl_iter = 1;
+    for i = 1:n_sim
+        for j = 1:n_tel
+            tel_resp(i, :, j) = dt.DA(find(dt.grp(:, 1, i) == j*2, 1), :, i);
+        end
+        for j = 2001:(find(dt.grp(:, 1, i) ~= 1, 1)-1)
+            ctrl_resp(ctrl_iter, :) = dt.DA(j, :, i);
+            ctrl_iter = ctrl_iter + 1;
+        end
+    end
+    assert( ...
+        ctrl_iter > n_ctrl, ...
+        sprintf( ...
+            '# of control iterator(%d) is smaller than # of control(%d)', ...
+            ctrl_iter, n_ctrl...
+        ) ...
+    );
+   
+    figure('Name', 'Figure 1. Teleport response aligned by trial on');
+    sgtitle('Teleport response ab trial on')
+    pos = get(gcf, 'Position');
+    set(gcf, 'Position', pos + [0 0 600 0]);
+    for i = 1:n_tel
+        subplot(1, 3, i);
+        errorbar(mean(tel_resp(:, :, i)), std(tel_resp(:, :, i)), '-r');
+        hold on
+        errorbar(mean(ctrl_resp), std(ctrl_resp), '-k');
+        fill(...
+            [1:max_cue-1 flip(1:max_cue-1)], ...
+            [max(tel_resp(:,1:end-1,i)),flip(min(tel_resp(:,1:end-1,i)))],...
+            'red', ...
+            'EdgeColor', 'none', ...
+            'FaceAlpha', 0.3...
+        );
+        fill(...
+            [1:max_cue flip(1:max_cue)], ...
+            [max(ctrl_resp), flip(min(ctrl_resp))], ...
+            'black', ...
+            'EdgeColor', 'none', ...
+            'FaceAlpha', 0.3...
+        );
+        hold off
+        title(sprintf('Teleport @ cue %d', 2*i-1));
+        xlabel('Cue');
+        ylabel('DA');
+        xticks(1:max_cue);
+    end
+    saveas(gcf,'./fig/figS13_1-teleport_response_ab_trial_on.png');
 
-    figure;
-    errorbar(1:9, mu_DA_alter, sigma_DA_alter);
-    hold on;
-    errorbar(1:9, mu_DA(2, :), sigma_DA(2, :));
-    errorbar(1:9, mu_DA(3, :), sigma_DA(3, :));
-    errorbar(1:9, mu_DA(4, :), sigma_DA(4, :));
-    hold off;
-    xlabel('Cue');
-    ylabel('Dopamine activity');
-    legend({'Standard', 'Teleport 1', 'Teleport 2', 'Teleport 3'});
-    title('Average dopamine activity predicted by the ANCCR model');
-
-    figure;
-    errorbar(1:9, mu_DA_alter, sigma_DA_alter, '-o');
-    hold on;
-    plot(1:9, data.DA(find(data.grp == 2, 1), :));
-    plot(1:9, data.DA(find(data.grp == 4, 1), :));
-    plot(1:9, data.DA(find(data.grp == 6, 1), :));
-    hold off;
-    xlabel('Cue');
-    ylabel('Dopamine activity');
-    legend({'Standard', 'Teleport 1', 'Teleport 2', 'Teleport 3'});
-    title(sprintf('First teleport dopamine activity predicted by the ANCCR model\n(aligned by trial on)'));
-
-    figure;
-    errorbar(1:9, mu_DA_alter, sigma_DA_alter, '-o');
-    hold on;
-    plot(2:9, data.DA(find(data.grp == 2, 1), 1:8));
-    plot(2:9, data.DA(find(data.grp == 4, 1), 1:8));
-    plot(2:9, data.DA(find(data.grp == 6, 1), 1:8));
-    hold off;
-    xlabel('Cue');
-    ylabel('Dopamine activity');
-    legend({'Standard', 'Teleport 1', 'Teleport 2', 'Teleport 3'});
-    title(sprintf('First teleport dopamine activity predicted by the ANCCR model\n(aligned by reward on)'));
+    figure('Name', 'Figure 2. Teleport response aligned by reward on');
+    sgtitle('Teleport response ab reward on')
+    pos = get(gcf, 'Position');
+    set(gcf, 'Position', pos + [0 0 600 0]);
+    for i = 1:n_tel
+        subplot(1, 3, i);
+        errorbar( ...
+            2:max_cue, ...
+            mean(tel_resp(:, 1:end-1, i)), ...
+            std(tel_resp(:, 1:end-1, i)), ...
+            '-r' ...
+        );
+        hold on
+        errorbar(mean(ctrl_resp), std(ctrl_resp), '-k');
+        fill(...
+            [2:max_cue flip(2:max_cue)], ...
+            [max(tel_resp(:,1:end-1,i)),flip(min(tel_resp(:,1:end-1,i)))],...
+            'red', ...
+            'EdgeColor', 'none', ...
+            'FaceAlpha', 0.3...
+        );
+        fill(...
+            [1:max_cue flip(1:max_cue)], ...
+            [max(ctrl_resp), flip(min(ctrl_resp))], ...
+            'black', ...
+            'EdgeColor', 'none', ...
+            'FaceAlpha', 0.3...
+        );
+        hold off
+        title(sprintf('Teleport @ cue %d', 2*i-1));
+        xlabel('Cue');
+        ylabel('DA');
+        xticks(1:max_cue);
+    end
+    saveas(gcf,'./fig/figS13_2-teleport_response_ab_reward_on.png');
 end
