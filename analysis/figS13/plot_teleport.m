@@ -35,7 +35,7 @@ function [] = plot_teleport(df, fp)
         for j = 1:n_tel
             tel_resp(i, :, j) = dt.DA(find(dt.grp(:, 1, i) == j*2, 1), :, i);
         end
-        for j = 2001:(find(dt.grp(:, 1, i) ~= 1, 1)-1)
+        for j = (n_trial/2+1):(find(dt.grp(:, 1, i) ~= 1, 1)-1)
             ctrl_resp(ctrl_iter, :) = dt.DA(j, :, i);
             ctrl_iter = ctrl_iter + 1;
         end
